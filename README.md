@@ -29,9 +29,8 @@ is:
 
 You can see this options anytime by using the `-h` or `--help` argument.
 The default values for the options `-l`, `-r`, and `-b` are calibrated
-for the [Mercator
-map](https://upload.wikimedia.org/wikipedia/commons/f/f4/Mercator_projection_SW.jpg)
-with resolution of 2058×1746 pixels you can find in Wikipedia.
+for the Mercator map with resolution of 2058×1746 pixels you can find in
+Wikipedia.
 
 Three files are required for this program to work:
 
@@ -47,8 +46,8 @@ Three files are required for this program to work:
     degrees, you should use an approximation, such as -89.99 degrees).
 
     The default map for the configured settings is the one you can find
-    in Wikipedia for the article: [Mercator
-    Projection](https://en.wikipedia.org/wiki/Mercator_projection), but
+    in Wikipedia for the article: _[Mercator
+    Projection](https://en.wikipedia.org/wiki/Mercator_projection)_, but
     in the size of 2058×1746 pixels.
 
   * **IP list.**  A file of the IPs you want to plot in a map.  There
@@ -84,7 +83,7 @@ Three files are required for this program to work:
 
 ## Quick usage
 
-  1. Download the Mercator map (2058×1746 pixels) from Wikipedia
+  1. Download the Mercator map (2058×1746 pixels) from Wikipedia:
     <https://upload.wikimedia.org/wikipedia/commons/f/f4/Mercator_projection_SW.jpg>
     and save it in the `data` folder under the name of
     `worldmap_raw.jpg`.
@@ -93,7 +92,8 @@ Three files are required for this program to work:
      the map in the folder `data` under the name of `ips.lst`.
 
   3. Create a CSV database with the columns:
-     `netmask,latitude,longitude`.  See below.
+     `netmask,latitude,longitude` and save it in the folder `data`under
+     the name `geoip_ipv4.csv`.  See below.
 
 
 ## Generating a CSV database
@@ -111,9 +111,10 @@ its weight, but it can be constructed easily.
 
   3. Create a new document using the following command:
 
-        $ awk -F',' '{print $1","$8","$9}' GeoLite2-City-Blocks-IPv4.csv >geoip_ipv4.csv
+        `$ awk -F',' '{print $1","$8","$9}' GeoLite2-City-Blocks-IPv4.csv >geoip_ipv4.csv`
 
-     Put the file in the `data` directory with that name.
+     Put the output file in the `data` directory with the name
+     `geoip_ipv4.csv`.
 
 ## Using custom files
 
