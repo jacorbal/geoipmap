@@ -6,6 +6,9 @@ This program plots the geographical coordinates of IPs (v4) using a database
   * **Version:** 1.0.1 (2019-03-21)
   * **Requires:** `python-matplotlib`, `python-netaddr`.
 
+
+## Basics
+
 All needed data could be conveniently contained in the folder `data/`,
 although through arguments you can specify another files or path.  The
 usage of the main entry is:
@@ -137,6 +140,55 @@ When changing the image, you have to specify, at least, the degrees more
 to the south the map displays (and in some cases, the points more to the
 west and/or to the right when the map is not calibrated in between 180°W
 and 180°E, *i.e.*, the range [-180, 180], for degrees of longitude.
+
+
+## Output and display
+
+This is an example of the output provided by this program using
+`matplotlib`.  This image is a zoomed detail.
+
+<!-- ![Output example](images/output_example.png) -->
+![Output detail example](images/output_example_detail.png
+    "Output detail example")
+
+The red dots indicate each one of the location of the IPs in the file
+`ips.lst`.  The radius of this circle is calculated automatically in the
+function `plot_pixels`.
+
+The automatic calculation provides a way to draw the circles with a size
+in relation to the image size.  The computation is performed by getting
+the biggest dimension of the image, and set the radius to a 0.3% of this
+length, so, for the most common resolutions:
+
+| Resolution  | Radius |
+|:-----------:|-------:|
+|  800×600    |  2.400 |
+| 1024×768    |  3.072 |
+| 1280×1024   |  3.840 |
+| 1920×1080   |  5.760 |
+| 3840×2160   | 11.520 |
+| 7680×4320   | 23.040 |
+
+The default image detailed above has a resolution of 2058×1746 pixels,
+so its radius will be 6.174 pixels.
+
+This default behaviour can be altered by invoking the `plot_pixels`
+function with an extra argument indicating the float value of the radius
+in pixels.
+
+    :::python
+        # Automatic radius
+        plot_pixels(pixels_set, image_obj)
+
+        # Constant radius
+        plot_pixels(pixels_set, image_obj, radius=10)
+
+This function is invoked in the main entry, at the end of the file
+`main.py`.
+
+**NOTE.**  This method will be probably changed in the future to a much
+better approximation.
+
 
 ## License
 
