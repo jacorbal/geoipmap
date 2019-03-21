@@ -177,7 +177,6 @@ def plot_pixels(pixels, image, radius=None):
 
     img = matplotlib.image.imread(image.filepath)
     fig, ax = plt.subplots(1)
-#    fig.canvas.window().statusBar().setVisible(False)
     ax.set_aspect('equal')
     ax.imshow(img)
 
@@ -190,4 +189,5 @@ def plot_pixels(pixels, image, radius=None):
     # Show the image
     plt.axis('off')
 #    plt.savefig("plot_" + image.filepath, bbox_inches='tight')
+    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
     plt.show()
