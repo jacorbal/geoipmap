@@ -69,7 +69,7 @@ Three files are required for this program to work:
 
   * **Geocoordinates database.**  A CSV file containing the following
     columns, without comments (may be this will be solved in a future
-    version): `netmask, latitude, longitude`.  The default CVS file used
+    version): `netmask, latitude, longitude`.  The default CSV file used
     is `data/geoip_ipv4.csv`.  For example:
 
         ...
@@ -92,17 +92,17 @@ Three files are required for this program to work:
   2. Put a file containing the IPs you want to plot (one per line) in
      the map in the folder `data` under the name of `ips.lst`.
 
-  3. Create a CVS database with the columns:
+  3. Create a CSV database with the columns:
      `netmask,latitude,longitude`.  See below.
 
 
-## Generating a CVS database
+## Generating a CSV database
 
 The CSV database of 'network, longitude, latitude' is not included due
 its weight, but it can be constructed easily.
 
   1. Download from [MaxMind](https://dev.maxmind.com) the GeoLite2 City
-     database in CVS format.  You'll find it at:
+     database in CSV format.  You'll find it at:
   <https://geolite.maxmind.com/download/geoip/database/GeoLite2-City-CSV.zip>.
 
   2. Uncompress that file and work with the
