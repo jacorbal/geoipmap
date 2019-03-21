@@ -1,0 +1,8 @@
+*~
+.*.sw?
+_tmp_
+__pycache__
+*.ignore
+worldmap_raw.jpg
+geoip_ipv4.csv
+
