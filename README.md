@@ -82,9 +82,7 @@ Three files are required for this program to work:
         73.185.116.0/23,39.1663,-121.5105
         ...
 
-## Usage
-
-Using few options:
+## Quick usage
 
   1. Download the Mercator map (2058×1746 pixels) from Wikipedia
     <https://upload.wikimedia.org/wikipedia/commons/f/f4/Mercator_projection_SW.jpg>
@@ -94,8 +92,8 @@ Using few options:
   2. Put a file containing the IPs you want to plot (one per line) in
      the map in the folder `data` under the name of `ips.lst`.
 
-  3. Create a CVS database with the columns: `netmask latitude
-     longitude`.  See below.
+  3. Create a CVS database with the columns:
+     `netmask,latitude,longitude`.  See below.
 
 
 ## Generating a CVS database
