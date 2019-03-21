@@ -1,21 +1,21 @@
 # GeoIPMap
 
+This program plots the geographical coordinates of IPs (v4) using a database
+(CSV) in a world map using the Mercator projection.
+
   * **Version:** 1.0.1 (2019-03-21)
   * **Requires:** `python-matplotlib`, `python-netaddr`.
 
-This program plots the geographical coordinates of IPs (v4) using a database
-(CSV) in a worldmap using the Mercator projection.
-
-All needed data it's contained in the folder `data/`, although through
-arguments you can specify another files.  The usage of the main entry
-is:
+All needed data could be conveniently contained in the folder `data/`,
+although through arguments you can specify another files or path.  The
+usage of the main entry is:
 
         -i <IPLIST>, --iplist <IPLIST>
                             File of IPs to plot, one per line
         -g <GEODB>, --geodb <GEODB>
-                            CSV document with columns: network, lat, lon
+                            CSV document with columns: 'network,lat,lon'
         -f <IMAGEFILE>, --imagefile <IMAGEFILE>
-                            Template image path to plot over
+                            Path for the template image to plot over
         -W WIDTH, --width WIDTH
                             Width in pixels of the image file
         -H HEIGHT, --height HEIGHT
@@ -30,25 +30,32 @@ is:
 You can see this options anytime by using the `-h` or `--help` argument.
 The default values for the options `-l`, `-r`, and `-b` are calibrated
 for the Mercator map with resolution of 2058×1746 pixels you can find in
-Wikipedia.
+Wikipedia, as explained below.
 
 Three files are required for this program to work:
 
-  * **Image file.**  This is a worldmap image in the Mercator
+  * **Image file.**  This is a world map image in the Mercator
     projection.  The file properties such as `width`, `length`, and the
     degrees of left, right, and bottom boundaries depicted may be
-    entered through the command line, as well as the filename.
-    When changing the image, you have to adjust three points specified
-    in degrees, the point most to the left (by default is -180 degrees), 
-    the point most to the right (by default is 180 degrees), and the
-    point most to the south.  It shouldn't be greater than -90 degrees
-    (although if you have a map where the most fore south point is at -90
-    degrees, you should use an approximation, such as -89.99 degrees).
+    entered through the command line, as well as the filename.  When
+    changing the image, you have to adjust three points specified in
+    degrees, the point most to the left (by default is -180°), the point
+    most to the right (by default is 180°), and the point most to the
+    south.  It shouldn't be greater than -90°, although if you have a
+    map where the most fore south point is exactly at -90°, you should
+    use an approximation, such as -89.99, or a division by zero may
+    happen because the linear scale becomes infinitely large at the
+    poles in this projection.
 
     The default map for the configured settings is the one you can find
     in Wikipedia for the article: _[Mercator
     Projection](https://en.wikipedia.org/wiki/Mercator_projection)_, but
-    in the size of 2058×1746 pixels.
+    in the size of 2058×1746 pixels.  It's set between 82°S and 82°N,
+    *i.e.*, with latitudes in the range [-82, 82].
+
+    You can download and use a different map, or the same map in a
+    different resolution, but you'll have to specify the dimensions and
+    other parameters through the command line when invoking the program.
 
   * **IP list.**  A file of the IPs you want to plot in a map.  There
     have to be IP addresses, not in subnet notation or netmasks, one
@@ -128,8 +135,8 @@ Instead `python main.py`, you may use:
 
 When changing the image, you have to specify, at least, the degrees more
 to the south the map displays (and in some cases, the points more to the
-west and/or to the right when the map is not calibrated in the range
-[-180,180] for degrees of longitude.
+west and/or to the right when the map is not calibrated in between 180°W
+and 180°E, *i.e.*, the range [-180, 180], for degrees of longitude.
 
 ## License
 

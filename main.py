@@ -39,9 +39,9 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--iplist', default='data/ips.lst',
                         help="File of IPs to plot, one per line")
     parser.add_argument('-g', '--geodb', default='data/geoip_ipv4.csv',
-                        help="CSV document with columns: network, lat, lon")
+                        help="CSV document with columns: 'network,lat,lon'")
     parser.add_argument('-f', '--imagefile', default='data/worldmap_raw.jpg',
-                        help="Template image path to plot over")
+                        help="Path for the template image to plot over")
     parser.add_argument('-W', '--width', default='2058',
                         help="Width in pixels of the image file")
     parser.add_argument('-H', '--height', default='1746',
@@ -50,7 +50,7 @@ if __name__ == '__main__':
                         help="Degrees most to the left in the image")
     parser.add_argument('-r', '--right', default='180',
                         help="Degrees most to the right in the image")
-    parser.add_argument('-b', '--bottom', default='-82.015',
+    parser.add_argument('-b', '--bottom', default='-82',
                         help="Degrees most to the bottom in the image")
     args = parser.parse_args()
 
