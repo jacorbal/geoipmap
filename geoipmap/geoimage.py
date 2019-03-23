@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set ft=python fenc=utf8 fo=tcqrj1n:
 
-# GEOIPMAP :: Worldmap plotting of locations associated to IPs
+# GEOIPMAP :: World map plotting of locations associated to IPs
 # Copyright (C) 2019, J. A. Corbal <jacorbal@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 __author__ = "J. A. Corbal"
 __copyright__ = "Copyright (C) 2019, J. A. Corbal"
 __license__ = "BSD 2-Clause"
-__version__ = "1.0.1"
+__version__ = "1.1.2-rc.1"
 __mantainer__ = "J. A. Corbal"
 __email__ = "jacorbal@gmail.com"
 __status__ = "Development"
@@ -104,9 +104,17 @@ class GeoImage(object):
     def __set_s_deg(self, s_deg):
         self._s_deg = s_deg
 
+    # Properties
     filepath = property(__get_filepath, __set_filepath)
     width = property(__get_width, __set_width)
     height = property(__get_height, __set_height)
     w_deg = property(__get_w_deg, __set_w_deg)
     e_deg = property(__get_e_deg, __set_e_deg)
     s_deg = property(__get_s_deg, __set_s_deg)
+
+    # Class printing
+    def __repr__(self):
+        return self._filepath
+
+    def __str__(self):
+        return "'{}' ({}x{})".format(self._filepath, self._width, self._height)

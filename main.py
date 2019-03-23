@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set ft=python fenc=utf8 fo=tcqrj1n:
 
-# GEOIPMAP :: Worldmap plotting of locations associated to IPs
+# GEOIPMAP :: World map plotting of locations associated to IPs
 # Copyright (C) 2019, J. A. Corbal <jacorbal@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,8 +30,7 @@
 
 import argparse
 from geoipmap import GeoImage
-from geoipmap import ips_to_pixels
-from geoipmap import plot_pixels
+from geoipmap import GeoIpMap
 
 
 if __name__ == '__main__':
@@ -52,6 +51,8 @@ if __name__ == '__main__':
                         help="Degrees most to the right in the image")
     parser.add_argument('-b', '--bottom', default='-82',
                         help="Degrees most to the bottom in the image")
+    parser.add_argument('-n', '--nsplits', default='0',
+                        help="Splits for reading 'geodb' file (threading)")
     args = parser.parse_args()
 
     img = GeoImage(args.imagefile,
@@ -60,5 +61,8 @@ if __name__ == '__main__':
                    w_deg=float(args.left),
                    e_deg=float(args.right),
                    s_deg=float(args.bottom))
-    pixels = ips_to_pixels(args.iplist, args.geodb, img, verbose=True)
-    plot_pixels(pixels, img)
+    geo = GeoIpMap(args.iplist, args.geodb, img,
+                   num_splits=int(args.nsplits),
+                   verbose=True)
+    geo.ips_to_pixels()
+    geo.plot()

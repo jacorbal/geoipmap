@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set ft=python fenc=utf8 fo=tcqrj1n:
 
-# GEOIPMAP :: Worldmap plotting of locations associated to IPs
+# GEOIPMAP :: World map plotting of locations associated to IPs
 # Copyright (C) 2019, J. A. Corbal <jacorbal@gmail.com>
 #
 # Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 
 """
 Methods to gather longitude and latitude coordinates given an IP address
-using a database (CSV) and plot those points into a worldmap using the
+using a database (CSV) and plot those points into a world map using the
 Mercator projection.
 
 Required:
@@ -45,7 +45,7 @@ Required:
 __author__ = "J. A. Corbal"
 __copyright__ = "Copyright (C) 2019, J. A. Corbal"
 __license__ = "BSD 2-Clause"
-__version__ = "1.0.1"
+__version__ = "1.1.2-rc.1"
 __mantainer__ = "J. A. Corbal"
 __email__ = "jacorbal@gmail.com"
 __status__ = "Development"
@@ -58,136 +58,256 @@ import matplotlib.pyplot as plt
 from netaddr import IPAddress
 from netaddr import IPNetwork
 from netaddr import valid_ipv4
+import threading
 
 
-def geo_to_pixel(lat, lon, width, height, lon_west, lon_east, lat_south):
-    """Converts longitude and latitude to Mercator projection coordinates.
+class GeoIpMap(object):
+    """GeoIpMap class.  Get the data, calculate and plot.
 
-    :param lat: Latitude in degrees
-    :type lat: float
-    :param lon: Longitude in degrees
-    :type lon: float
-    :param width: Map width in pixels
-    :type width: int
-    :param height: Map height in pixels
-    :type height: int
-    :param lon_west: Longitude of the left side of the map in degrees
-    :type lon_west: float
-    :param lon_east: Longitude of the right side of the map in degrees
-    :type lon_east: float
-    :param lat_south: Latitude of the bottom of the map in degrees
-    :type lat_south: float
-    :return: Pixel coordinates (x,y)
-    :rtype: pair
+    This class instantiates objects capable of the following methods:
+
+      1. Get list of IPs and database of IPs and geocoordinates
+      2. Convert IP addresses to pixels: `ips_to_pixels`
+      3. Plot the pixels in a image: `plot`
+
+    In order to perform this actions, three files are needed:
+
+      * `ips_file`.  A list of the IPs to plot, one per line
+      * `geodb_file`.  A CSV file with columns: 'netmask,lat,lon'
+      * Image file.  Contained indirectly in the `img` object
+
+    ..note:: Right now, the files must be formatted with no comments.
+
+    This class returns the `_pixels` set attribute when invoked for
+    printing, containing the pairs (`x`, `y`) to be drawn in the map.
     """
-    lat_south_rad = math.radians(lat_south)
-    lat_rad = math.radians(lat)
-    lon_delta = (lon_east - lon_west)
-    map_width = (width / lon_delta) * 360 / (2 * math.pi)
-    offset_y = (map_width /
-                2 * math.log((1 + math.sin(lat_south_rad)) /
-                             (1 - math.sin(lat_south_rad))))
 
-    x = (lon - lon_west) * (width / lon_delta)
-    y = height - ((map_width /
-                   2 * math.log((1 + math.sin(lat_rad)) /
-                                (1 - math.sin(lat_rad)))) - offset_y)
+    def __init__(self, ips_file, geodb_file, img, num_splits=10,
+                 verbose=False):
+        """Initializes the GeoIPMap object.
 
-    return (x, y)
+        :param iplist_file: IP list file, one IP per line
+        :type iplist_file: str
+        :param geodb_file: Netmask, latitude and longitude CSV database
+        :type geodb_file: str
+        :param img: Image object with information to plot
+        :type img: GeoImage
+        :param num_splits: Splits of `geodb_file` for reading (threading)
+        :type num_splits: int
+        :param verbose: When true, print information on screen
+        :type verbose: bool
+        """
+        self._pixels = set()
+        self._verbose = verbose
+        self._img = img
+        self.__set_num_splits(num_splits)
+        self.__set_geodb(geodb_file)
+        self.__set_ips(ips_file)
 
+    def __get_num_splits(self):
+        return self._num_splits
 
-def ips_to_pixels(lst_ips_file, csv_nwgeo_file, image, verbose=False):
-    """Return a list of pairs (x,y) from a list of IPs.
+    def __get_geodb(self):
+        return self._geodb
 
-    This method check the geoposition of the list of IP using a database
-    file in the format CSV, then translate their (lon,lat) to the points
-    in a plane.
+    def __get_ips(self):
+        return self._ips
 
-    The "pixels" are in reality circles with a radius determined by the
-    aspect ratio of the image so, in the typical ratios, the radius of
-    that circle is around seven pixels long.
+    def __set_geodb(self, geodb_file):
+        if (self._verbose):
+            print('Unpacking', geodb_file)
+        with open(geodb_file, 'rt') as f:
+            reader = csv.reader(f)
+            self._geodb = list(reader)
 
-    :param lst_ips_file: File with a list of IPs, one per line
-    :type lst_ips_file: str
-    :param csv_nwgeo_file: CSV file with a list of networks and geocoords.
-    :type csv_nwgeo_file: str
-    :param image: Image where the points will be plotted
-    :type image: SimpleImage
-    :return: Set of pairs (x,y) associated to the IPs
-    :rtype: set
+    def __set_ips(self, ips_file):
+        if (self._verbose):
+            print('Unpacking', ips_file)
+        with open(ips_file, 'rt') as f:
+            self._ips = f.readlines()
+            self._ips = [x.strip() for x in self._ips]
 
-    :see: geo_to_pixel
-    """
-    with open(csv_nwgeo_file, 'rt') as f:
-        reader = csv.reader(f)
-        nwgeo = list(reader)  # list([network,latitude,longitude])
+    def __set_num_splits(self, num_splits):
+        """Sets the number of splits the threading function can do."""
+        if num_splits < 0:
+            self._num_splits = 0
+#        elif num_splits > 200:
+#            self._num_splits = 200
+        else:
+            self._num_splits = num_splits
 
-    with open(lst_ips_file, 'rt') as f:
-        ips = f.readlines()
-        ips = [x.strip() for x in ips]  # list(ip)
+    def __del_ips(self):
+        del self._ips
 
-    if verbose:
-        print("Gathering data; this may take a while...")
+    def __del_geodb(self):
+        del self._geodb
 
-    pixels = {geo_to_pixel(float(lat), float(lon),
-                           image.width, image.height,
-                           image.w_deg, image.e_deg, image.s_deg)
-              for [nw, lat, lon] in nwgeo
-              for ip in ips
-              if valid_ipv4(ip) and IPAddress(ip) in IPNetwork(nw)}
+    def geo_to_pixel(self, lat, lon):
+        """Converts longitude and latitude to Mercator proj. coords.
 
-    if verbose:
-        print("Data gathered!")
+        :param lat: Latitude in degrees
+        :type lat: float
+        :param lon: Longitude in degrees
+        :type lon: float
+        :return: Pixel coordinates (`x`, `y`)
+        :rtype: pair
+        """
+        lat_south_rad = math.radians(self._img.s_deg)
+        lat_rad = math.radians(lat)
+        lon_delta = (self._img.e_deg - self._img.w_deg)
+        map_width = (self._img.width / lon_delta) * 360 / (2 * math.pi)
+        offset_y = (map_width /
+                    2 * math.log((1 + math.sin(lat_south_rad)) /
+                                 (1 - math.sin(lat_south_rad))))
 
-    return pixels
+        x = (lon - self._img.w_deg) * (self._img.width / lon_delta)
+        y = self._img.height - \
+            ((map_width / 2 * math.log((1 + math.sin(lat_rad)) /
+                                       (1 - math.sin(lat_rad)))) -
+             offset_y)
 
+        return (x, y)
 
-def plot_pixels(pixels, image, radius=None):
-    """Plot coordinates from a list of pairs (x,y) as circles.
+    def __ips_to_pixels_nothreading(self):
+        """Return a list of pairs (`x`, `y`) from a list of IPs.
 
-    When not set, the radius of the circle is obtained from the
-    resolution of the image, where usually 'width > height' but
-    'width ~= height'.  The default radius is the 0.3% of the largest
-    dimension of the image, so:
+        ..note:: This method is very heavy; just for debugging.
+                 The original purpose of this method was to test the
+                 program, but now the best efficiency goes to
+                 `ips_to_pixels_threading`
 
-            ============ ========
-             Resolution   Radius
-            ============ ========
-              800×600      2.400
-             1024×768      3.072
-             1280×1024     3.840
-             1920×1080     5.760
-             3840×2160    11.520
-             7680×4320    23.040
-            ============ ========
+        This method check the geoposition of the list of IP using a
+        database file in the format CSV, then translate their
+        (`lon`, `lat`) to the points in a plane.
 
-    The default image has a resolution of 2058×1746 px, so its radius
-    will be 6.174.
+        :see: self.geo_to_pixel
+        """
+        if self._verbose:
+            print("Gathering data; this may take a while...")
 
-    :param pixels: Set of pairs (x,y) to plot
-    :type pixels: set
-    :param image: Image to draw over
-    :type image: SimpleImage
-    :param radius: radius in pixels of the circles
-    :type radius: float
-    """
-    if not radius:
-        radius = 0.003 * image.width if image.width > image.height \
-                                     else 0.003 * image.height
+        self._pixels = {self.geo_to_pixel(float(lat), float(lon))
+                        for [nw, lat, lon] in self._geodb
+                        for ip in self._ips
+                        if valid_ipv4(ip) and
+                        IPAddress(ip) in IPNetwork(nw)}
 
-    img = matplotlib.image.imread(image.filepath)
-    fig, ax = plt.subplots(1)
-    ax.set_aspect('equal')
-    ax.imshow(img)
+        if self._verbose:
+            print("Data gathered!")
 
-    for x, y in pixels:
-        circ = matplotlib.patches.Circle((x, y), radius,
-                                         facecolor='red',
-                                         edgecolor='black')
-        ax.add_patch(circ)
+    def __match_geodb(self, start, end):
+        """Private method to get the pixels for an IP.
 
-    # Show the image
-    plt.axis('off')
-#    plt.savefig("plot_" + image.filepath, bbox_inches='tight')
-    plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    plt.show()
+        This method check the geoposition of the list of IP using a
+        database file in the format CSV, then translate their
+        (`lon`, `lat`) to the points in a plane.  But instead of
+        searching in the whole database, it looks within a range defined
+        by [`start`, `end`]
+
+        :param start: Where to start in the CSV database
+        :type start: int
+        :param end: Where to end
+        :type start: int
+        """
+        for nw, lat, lon in self._geodb[start:end]:
+            for ip in self._ips:
+                if valid_ipv4(ip) and IPAddress(ip) in IPNetwork(nw):
+                    self._pixels.add(self.geo_to_pixel(float(lat),
+                                                       float(lon)))
+
+    def __ips_to_pixels_threading(self):
+        """Splits the load of `__match_geodb` to run collectively.
+
+        This is the threading version of `ips_to_pixels`
+
+        ..see:: self.__ips_to_pixels_nothreading
+        """
+        if self._verbose:
+            print("Gathering data; this may take a while...")
+
+        split_size = len(self._geodb) // self._num_splits
+        threads = []
+        for i in range(self._num_splits):
+            start = i * split_size
+            end = None if i + 1 == self._num_splits \
+                else (i + 1) * split_size
+            threads.append(
+                threading.Thread(target=self.__match_geodb,
+                                 args=(start, end)))
+            threads[-1].start()
+
+        for t in threads:
+            t.join()
+
+        if self._verbose:
+            print("Data gathered!")
+
+    def ips_to_pixels(self):
+        """Sets the default method for translating IPs to pixels.
+
+        Depending on the class attribute `self._num_splits`, it chooses
+        a method with threading or without it.
+        """
+        if self._num_splits <= 1:
+            self.__ips_to_pixels_nothreading()
+        else:
+            self.__ips_to_pixels_threading()
+
+    def plot(self, radius=None):
+        """Plot coordinates from a list of pairs (`x`, `y`) as circles.
+
+        When not set, the radius of the circle is obtained from the
+        resolution of the image, where usually 'width > height' but
+        'width ~= height'.  The default radius is the 0.3% of the
+        largest dimension of the image, so:
+
+                ============ ========
+                 Resolution   Radius
+                ============ ========
+                  800×600      2.400
+                 1024×768      3.072
+                 1280×1024     3.840
+                 1920×1080     5.760
+                 3840×2160    11.520
+                 7680×4320    23.040
+                ============ ========
+
+        The default image has a resolution of 2058×1746 pixels, so its
+        radius will be 6.174.
+
+        :param radius: radius in pixels of the circles
+        :type radius: float
+        """
+        if not radius:
+            radius = 0.003 * self._img.width \
+                if self._img.width > self._img.height \
+                else 0.003 * self._img.height
+
+        img = matplotlib.image.imread(self._img.filepath)
+        fig, ax = plt.subplots(1)
+        ax.set_aspect('equal')
+        ax.imshow(img)
+
+        for x, y in self._pixels:
+            circ = matplotlib.patches.Circle((x, y), radius,
+                                             facecolor='red',
+                                             edgecolor='black')
+            ax.add_patch(circ)
+
+        # Show the image
+        plt.axis('off')
+        plt.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        if self._verbose:
+            print('Plotting')
+        plt.show()
+
+    # Properties
+    num_splits = property(__get_num_splits, __set_num_splits)
+    ips = property(__get_ips, __set_ips, __del_ips)
+    geodb = property(__get_geodb, __set_geodb, __del_geodb)
+
+    # Class printing
+    def __repr__(self):
+        return self._pixels
+
+    def __str__(self):
+        return self._pixels

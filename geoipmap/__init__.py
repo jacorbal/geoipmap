@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # vim: set ft=python fenc=utf-8 tw=72:
 
-# GEOIPMAP :: Worldmap plotting of locations associated to IPs
+# GEOIPMAP :: World map plotting of locations associated to IPs
 # Copyright (c) 2019, J. A. Corbal
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
     GeopIPMap
     ~~~~~~~~~
 
-    Plots in a worldmap the locations of IPs
+    Plots in a world map the geographical locations of IPs
 
     :author: J. A. Corbal
     :copyright: (C) 2019, J. A. Corbal
@@ -40,5 +40,4 @@
 """
 
 from geoipmap.geoimage import GeoImage
-from geoipmap.geoipmap import ips_to_pixels
-from geoipmap.geoipmap import plot_pixels
+from geoipmap.geoipmap import GeoIpMap
