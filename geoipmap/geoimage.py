@@ -33,7 +33,7 @@
 __author__ = "J. A. Corbal"
 __copyright__ = "Copyright (C) 2019, J. A. Corbal"
 __license__ = "BSD 2-Clause"
-__version__ = "1.1.2-rc.1"
+__version__ = "1.2.0"
 __mantainer__ = "J. A. Corbal"
 __email__ = "jacorbal@gmail.com"
 __status__ = "Development"

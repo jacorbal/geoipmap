@@ -1,0 +1,10 @@
+Bugs
+====
+
+v 1.2.0 (2019-03-24):
+    * Bad performance in multiprocessing support
+    * (Still not fixed previous bugs)
+
+v 1.1.2-rc.1 (2019-03-23):
+    * Bad performance in multithreading support
+

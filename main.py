@@ -31,10 +31,13 @@
 import argparse
 from geoipmap import GeoImage
 from geoipmap import GeoIpMap
+import sys
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Plot coordinates of IP \
+                                                  addresses in a world map.')
+
     parser.add_argument('-i', '--iplist', default='data/ips.lst',
                         help="File of IPs to plot, one per line")
     parser.add_argument('-g', '--geodb', default='data/geoip_ipv4.csv',
@@ -51,18 +54,49 @@ if __name__ == '__main__':
                         help="Degrees most to the right in the image")
     parser.add_argument('-b', '--bottom', default='-82',
                         help="Degrees most to the bottom in the image")
-    parser.add_argument('-n', '--nsplits', default='0',
-                        help="Splits for reading 'geodb' file (threading)")
+    parser.add_argument('-t', '--threading', action='store_true',
+                        help="Sets the method to threading (use it with \
+                              the '-n' option")
+    parser.add_argument('-m', '--multiprocessing', action='store_true',
+                        help="Sets the method to multiprocessing (use it with \
+                              the '-w' option")
+    parser.add_argument('-n', '--nsplits', default='10',
+                        help="Parts the file 'geodb' is divided (threading)")
+    parser.add_argument('-w', '--nworkers', default='4',
+                        help="Number of workers (multiprocessing)")
+    parser.add_argument('-R', '--raw', action='store_true',
+                        help="Do not use threading nor multiprocessing")
     args = parser.parse_args()
 
+    if (args.threading and args.multiprocessing) or \
+       (args.threading and args.raw) or (args.multiprocessing and args.raw):
+        print("Error: conflicting options.  Use '-h' or '--help' for help.",
+              file=sys.stderr)
+        exit(1)
+
+    if args.raw:
+        arg_method = 'raw'
+    else:
+        arg_method = 'threading' if args.threading else 'multiprocessing'
+
+    arg_nsplits = int(args.nsplits) if not args.raw else 0
+    arg_nworkers = int(args.nworkers) if not args.raw else 0
+
+    # Image object instantiation
     img = GeoImage(args.imagefile,
                    width=int(args.width),
                    height=int(args.height),
                    w_deg=float(args.left),
                    e_deg=float(args.right),
                    s_deg=float(args.bottom))
+
+    # Geo object instantiation
     geo = GeoIpMap(args.iplist, args.geodb, img,
-                   num_splits=int(args.nsplits),
+                   method=arg_method,
+                   num_workers=arg_nworkers,
+                   num_splits=arg_nsplits,
                    verbose=True)
+
+    # Do the math!
     geo.ips_to_pixels()
-    geo.plot()
+#    geo.plot()

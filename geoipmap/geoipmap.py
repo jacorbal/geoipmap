@@ -45,7 +45,7 @@ Required:
 __author__ = "J. A. Corbal"
 __copyright__ = "Copyright (C) 2019, J. A. Corbal"
 __license__ = "BSD 2-Clause"
-__version__ = "1.1.2-rc.1"
+__version__ = "1.2.0"
 __mantainer__ = "J. A. Corbal"
 __email__ = "jacorbal@gmail.com"
 __status__ = "Development"
@@ -55,6 +55,7 @@ import csv
 import math
 import matplotlib.patches
 import matplotlib.pyplot as plt
+import multiprocessing
 from netaddr import IPAddress
 from netaddr import IPNetwork
 from netaddr import valid_ipv4
@@ -82,9 +83,31 @@ class GeoIpMap(object):
     printing, containing the pairs (`x`, `y`) to be drawn in the map.
     """
 
-    def __init__(self, ips_file, geodb_file, img, num_splits=10,
-                 verbose=False):
+    def __init__(self, ips_file, geodb_file, img,
+                 method='multiprocessing',  num_workers=4,
+                 num_splits=10, verbose=False):
         """Initializes the GeoIPMap object.
+
+        If the method is 'threads', then the method for finding the IPs
+        in the table with be done by the `threading` module (by the
+        applying `__ips_to_pixels_threading`); otherwise it will use the
+        `multiprocessing` module (using `__ips_to_pixels_multiprocessing`).
+        If `num_splits` is less or equal to one, none of those methods
+        will be used, and the table search is done in the "classical
+        way" (with `__ips_to_pixels_raw`).
+
+        When using `method=threading`, the argument `num_splits`
+        indicate in how many chunks the list is divided in order to make
+        better comparisons.  This variable is nonfunctional when using
+        the multiprocessing method.
+
+        When using `method!=threading` (i.e., `method=multiprocessing`),
+        the argument `num_workers` indicate how many workers are being
+        used in the calculation.  This variable is nonfunctional when
+        using the threading method.
+
+        When using `method=raw`, then no multiprocessing or threading is
+        performed.
 
         :param iplist_file: IP list file, one IP per line
         :type iplist_file: str
@@ -94,18 +117,25 @@ class GeoIpMap(object):
         :type img: GeoImage
         :param num_splits: Splits of `geodb_file` for reading (threading)
         :type num_splits: int
+        :param num_workers: Number of workers when multiprocessing
+        :type num_workers: int
         :param verbose: When true, print information on screen
         :type verbose: bool
         """
         self._pixels = set()
-        self._verbose = verbose
         self._img = img
+        self._method = method
+        self._verbose = verbose
         self.__set_num_splits(num_splits)
+        self.__set_num_workers(num_workers)
         self.__set_geodb(geodb_file)
         self.__set_ips(ips_file)
 
     def __get_num_splits(self):
         return self._num_splits
+
+    def __get_num_workers(self):
+        return self._num_workers
 
     def __get_geodb(self):
         return self._geodb
@@ -135,6 +165,13 @@ class GeoIpMap(object):
 #            self._num_splits = 200
         else:
             self._num_splits = num_splits
+
+    def __set_num_workers(self, num_workers):
+        """Sets the number of workers for multiprocessing."""
+        if num_workers < 0:
+            self._num_workers = 0
+        else:
+            self._num_workers = num_workers
 
     def __del_ips(self):
         del self._ips
@@ -168,13 +205,14 @@ class GeoIpMap(object):
 
         return (x, y)
 
-    def __ips_to_pixels_nothreading(self):
+    def __ips_to_pixels_raw(self):
         """Return a list of pairs (`x`, `y`) from a list of IPs.
 
         ..note:: This method is very heavy; just for debugging.
                  The original purpose of this method was to test the
-                 program, but now the best efficiency goes to
-                 `ips_to_pixels_threading`
+                 program, but other methods are
+                 `__ips_to_pixels_threading` and
+                 `__ips_to_pixels_multiprocessing`.
 
         This method check the geoposition of the list of IP using a
         database file in the format CSV, then translate their
@@ -194,14 +232,16 @@ class GeoIpMap(object):
         if self._verbose:
             print("Data gathered!")
 
-    def __match_geodb(self, start, end):
+    def __match_geodb(self, start=None, end=None):
         """Private method to get the pixels for an IP.
 
         This method check the geoposition of the list of IP using a
         database file in the format CSV, then translate their
         (`lon`, `lat`) to the points in a plane.  But instead of
         searching in the whole database, it looks within a range defined
-        by [`start`, `end`]
+        by [`start`, `end`].  It `start` and/or `end` are `None`, then
+        it will be considered repectively the beginning and the end of
+        the list.
 
         :param start: Where to start in the CSV database
         :type start: int
@@ -219,10 +259,10 @@ class GeoIpMap(object):
 
         This is the threading version of `ips_to_pixels`
 
-        ..see:: self.__ips_to_pixels_nothreading
+        ..see:: self.__ips_to_pixels_raw
         """
         if self._verbose:
-            print("Gathering data; this may take a while...")
+            print("Threading; gathering data; this may take a while...")
 
         split_size = len(self._geodb) // self._num_splits
         threads = []
@@ -241,16 +281,46 @@ class GeoIpMap(object):
         if self._verbose:
             print("Data gathered!")
 
+    def __ips_to_pixels_multiprocessing(self):
+        """Splits the load of `__match_geodb` to run collectively.
+
+        This is the multiprocessing version of `ips_to_pixels`
+
+        ..see:: self.__ips_to_pixels_raw
+        """
+        if self._verbose:
+            print("Multiprocessing; gathering data; this may take a while...")
+
+        workers = []
+        for i in range(self._num_workers):
+            workers.append(multiprocessing.Process(target=self.__match_geodb))
+            workers[-1].start()
+
+        for worker in workers:
+            worker.join()
+
+        if self._verbose:
+            print("Data gathered!")
+
     def ips_to_pixels(self):
         """Sets the default method for translating IPs to pixels.
 
         Depending on the class attribute `self._num_splits`, it chooses
-        a method with threading or without it.
+        a method with threading/multiprocessing or without them.
+
+        When the number of workers is one (or less), instead of
+        multiprocessing the calculations, those are made by the *raw*
+        method.  The same happens when using the threading method using
+        one split of the data.
         """
-        if self._num_splits <= 1:
-            self.__ips_to_pixels_nothreading()
+        if self._num_splits <= 1 or self._num_workers <= 1 or \
+           self._method == 'raw':
+            self.__ips_to_pixels_raw()
         else:
-            self.__ips_to_pixels_threading()
+            if self._method == 'threading':
+                self.__ips_to_pixels_threading()
+            else:
+                self.__ips_to_pixels_multiprocessing()
 
     def plot(self, radius=None):
         """Plot coordinates from a list of pairs (`x`, `y`) as circles.
@@ -302,6 +372,7 @@ class GeoIpMap(object):
 
     # Properties
     num_splits = property(__get_num_splits, __set_num_splits)
+    num_workers = property(__get_num_workers, __set_num_workers)
     ips = property(__get_ips, __set_ips, __del_ips)
     geodb = property(__get_geodb, __set_geodb, __del_geodb)
 

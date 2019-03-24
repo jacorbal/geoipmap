@@ -1,9 +1,13 @@
 Changelog
 =========
 
+v 1.2.0 (2019-03-24):
+  * Added multiprocessing support
+
 v 1.1.2-rc.1 (2019-03-23):
   * GeoIpMap is now a class and not separated functions
-  * Threading support
+  * Threading support (not very efficient)
+  * Bugs fixed
 
 v 1.0.1 (2019-03-21):
   * Added matplotlib support
