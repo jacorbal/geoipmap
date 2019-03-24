@@ -99,4 +99,4 @@ if __name__ == '__main__':
 
     # Do the math!
     geo.ips_to_pixels()
-#    geo.plot()
+    geo.plot()
