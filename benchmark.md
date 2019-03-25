@@ -4,6 +4,7 @@
 are wrongly implemented, as they results are worst than the method
 without any parallelism.
 
+---
 
 The CSV database is enormous, and it contains data in CIDR (Classless
 InterDomain Routing) subnet mask notation.  Thanks to `netaddr` it's
@@ -12,30 +13,30 @@ check has to be performed for all IPs in `ip.lst`.  The file
 `geoip_iv4.csv`, obtained as explained before, is around 101MiB, this
 translated to 3,235,808 lines, each one for one netmask.
 
-## Thread-based parallelism
+The method in question to look in the CSV database is call
+`__ips_to_pixels_raw` (previously named `ips_to_pixels`) in the first
+version.  This method is private and managed by the new version of
+`ips_to_pixels` which, depending on the values of the attributes of the
+class, calls the simple method (`__ips_to_pixels_raw`), the threading
+method (`__ips_to_pixels_threading`), or the multiprocessing method
+(`__ips_to_pixels_multiprocessing`).  All of these methods are
+explained below.
 
-Since version 1.1.2, `GeoIPMap` is a class instead of individual
-functions, and now it has two methods to do this task.  One is
-`__ips_to_pixels_raw` (previous and old function `ips_to_pixels`) and
-the other `__ips_to_pixels_threading` using the [`threading`
-module](https://docs.python.org/3.7/library/threading.html?highlight=threading#module-threading).
-I think the name is autoexplicative.  Both methods are private and
-managed by `ips_to_pixels` (the new method) who calls one or the other
-depending on how the object `GeoIPMap` was instantiated.
-
+        # Using no parallelism
         geo = GeoIpMap(iplist_filename, geodb_filename, image_object,
-                       num_splits=20, verbose=True)
+                       method="raw")
 
-The argument `num_splits` tells the `GeoIpMap` object how many _splits_
-in the performing of this task, which is to transverse across a big
-file.  If the number the _splits_ is one, there will be no threading and
-`ips_to_pixels` will invoke `__ips_to_pixels_raw`.  If the parameter is
-any integer greater than one, the method will invoke
-`__ips_to_pixels_threading` performing the task with that many _splits_.
+        # Using thread-based parallelism
+        geo = GeoIpMap(iplist_filename, geodb_filename, image_object,
+                       method="threading", num_splits=20)
 
-Here are some benchmarks.
+        # Using process-based parallelism
+        geo = GeoIpMap(iplist_filename, geodb_filename, image_object,
+                       method="multiprocessing", num_workers=4)
+
 All tests performed in a Intel(R) Core(TM) i7-3820 CPU @ 3.60GHz.
 
+## No parallelism
 
 ### Using `__ips_to_pixels_raw`:
 
@@ -62,8 +63,24 @@ very slow.
 ![Without threading](images/bm_raw.png "Benchmark without threading")
 
 The result is linear, as expected, but the elapsed time makes the
-program unusable.  For 100 IPs, there's one hour of waiting...
+program unusable.  For 100 IPs, there's one hour of waiting.  `:-(`
 
+
+## Thread-based parallelism
+
+Since version 1.1.2, `GeoIPMap` is a class instead of individual
+functions.  The threading implementation corresponds to the method
+`__ips_to_pixels_threading` using the [`threading`
+module](https://docs.python.org/3.7/library/threading.html?highlight=threading#module-threading).
+
+The argument `num_splits` tells the `GeoIpMap` object how many _splits_
+in the performing of this task, which is to transverse across a big
+file.  If the number the _splits_ is one, there will be no threading and
+`ips_to_pixels` will invoke `__ips_to_pixels_raw`.  If the parameter is
+any integer greater than one, the method will invoke
+`__ips_to_pixels_threading` performing the task with that many _splits_.
+
+Here are some benchmarks.
 
 ### Using `__ips_to_pixels_threading`:
 
@@ -145,6 +162,7 @@ case.  From:
 > reference count of the same object, the reference count could end up
 > being incremented only once instead of twice.
 
+
 ## Process-based parallelism
 
 Since version 1.2.0, and due the low efficiency of the threading
@@ -154,9 +172,12 @@ database and getting the results.  It uses the
 in order to avoid the issues with the Global Interpreter Lock.  It's
 name is `__ips_to_pixels_multiprocessing`.
 
+### Using `__ips_to_pixels_multiprocessing`:
+
+Here, the results are separated by different values of `num_workers`.
 These are the results:
 
-### nworkers=2
+#### `nworkers=2`
 
 | Number of IPs | Elapsed time (s) | Elapsed time (min) |
 |:-------------:| ----------------:| -----------------: |
@@ -174,7 +195,7 @@ These are the results:
 |       80      |      3030.660    |        50.511      |
 |      100      |      3767.743    |        62.796      |
 
-### nworkers=4
+#### `nworkers=4`
 
 | Number of IPs | Elapsed time (s) | Elapsed time (min) |
 |:-------------:| ----------------:| -----------------: |
@@ -192,7 +213,7 @@ These are the results:
 |      80       |      3047.260    |       50.788       |
 |     100       |      3909.775    |       65.163       |
 
-### nworkers=6
+#### `nworkers=6`
 
 | Number of IPs | Elapsed time (s) | Elapsed time (min) |
 |:-------------:| ----------------:| -----------------: |
@@ -210,7 +231,7 @@ These are the results:
 |      80       |      4363.330    |        72.722      |
 |     100       |      5358.870    |        89.315      |
 
-### nworkers=8
+#### `nworkers=8`
 
 | Number of IPs | Elapsed time (s) | Elapsed time (min) |
 |:-------------:| ----------------:| -----------------: |
@@ -232,5 +253,4 @@ These are the results:
 ![With multiprocessing](images/bm_multip.png "Benchmark comparison using multiprocessing")
 
 So... something is wrong and it will be fixed in the next version.
-
 
