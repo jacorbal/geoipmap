@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # vim: set ft=python fenc=utf8 fo=tcqrj1n:
 
 # GEOIPMAP :: World map plotting of locations associated to IPs

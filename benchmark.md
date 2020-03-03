@@ -1,7 +1,7 @@
 # Benchmarks
 
 **NOTE.**  Both the threading support and the multiprocessing support
-are wrongly implemented, as they results are worst than the method
+are wrongly implemented, as the results are worst than the method
 without any parallelism.
 
 ---
@@ -70,8 +70,9 @@ program unusable.  For 100 IPs, there's one hour of waiting.  `:-(`
 
 Since version 1.1.2, `GeoIPMap` is a class instead of individual
 functions.  The threading implementation corresponds to the method
-`__ips_to_pixels_threading` using the [`threading`
-module](https://docs.python.org/3.7/library/threading.html?highlight=threading#module-threading).
+`__ips_to_pixels_threading` using the
+[`threading`](https://docs.python.org/3.7/library/threading.html?highlight=threading#module-threading)
+module.
 
 The argument `num_splits` tells the `GeoIpMap` object how many _splits_
 in the performing of this task, which is to transverse across a big
@@ -167,10 +168,10 @@ case.  From:
 
 Since version 1.2.0, and due the low efficiency of the threading
 implementation, a new function does the task of looking up in the
-database and getting the results.  It uses the 
-[`multiprocessing` module](https://docs.python.org/3.7/library/multiprocessing.html)
-in order to avoid the issues with the Global Interpreter Lock.  It's
-name is `__ips_to_pixels_multiprocessing`.
+database and getting the results.  It uses the
+[`multiprocessing`](https://docs.python.org/3.7/library/multiprocessing.html)
+module in order to avoid the issues with the Global Interpreter Lock.
+It's name is `__ips_to_pixels_multiprocessing`.
 
 ### Using `__ips_to_pixels_multiprocessing`:
 

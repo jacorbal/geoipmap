@@ -26,7 +26,7 @@ download this dependencies.
   * Arch Linux:
 
         $ sudo pacman -S python-matplotlib
-        $ sudo pacman -S install python-netaddr
+        $ sudo pacman -S python-netaddr
 
 If that's not the case, you can always install them by using the `pip`
 tool.
@@ -34,6 +34,8 @@ tool.
         $ python -m pip install -U matplotlib
         $ python -m pip install -U netaddr
 
+Make the necesary changes depending on the default version of Python of
+your system, (e.g., use `python3` instead of `python`).
 
 ## Basics
 
@@ -276,5 +278,5 @@ More information about the license:
 
 ---
 
-J. A. Corbal, 2019.
+J. A. Corbal, 2019-2020.
 
