@@ -226,56 +226,6 @@ better approximation.
 See the [benchmarks](benchmark.md) document.
 
 
-## License
-
-This program is under the BSD 2-Clause license.  This license has also
-been called the "Simplified BSD License" and the "FreeBSD License".
-
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions
-    are met:
-
-      1. Redistributions of source code must retain the above copyright
-         notice, this list of conditions and the following disclaimer.
-
-      2. Redistributions in binary form must reproduce the above
-         copyright notice, this list of conditions and the following
-         disclaimer in the documentation and/or other materials provided
-         with the distribution.
-
-    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
-    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
-    FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-    INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-    BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-    LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-    CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
-    LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
-    ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
-
-The BSD 2-clause license allows you almost unlimited freedom with the
-software so long as you include the BSD copyright notice in it (found in
-the `LICENSE` file).
-
-Under this license, you may:
-
-  * use the software for commercial use;
-  * modify the software and create derivatives;
-  * distribute original or modified works;
-  * place warranty on the software licensed.
-
-You must:
-
-  * include copyright
-  * include the full text of license in modified software.
-
-More information about the license:
-<https://en.wikipedia.org/wiki/BSD_licenses#2-clause>.
-
-
 ---
 
 J. A. Corbal, 2019-2020.
